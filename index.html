@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css">
+    <title>hw24_fep</title>
+</head>
+
+<body>
+    <!-- Delete user confirmation dialog window -->
+    <dialog data-modal id="data_modal">
+        <div>Confirm user delete or press ESC</div>
+        <button data-close-modal>YES</button>
+    </dialog>
+    <!-- END Delete user confirmation dialog window -->
+
+
+
+
+    <!-- User list on start -->
+    <div class="container text-center list_container">
+        <div>
+            <ul id="user_list"></ul>
+            <!-- User creation form -->
+            <form id="form">
+                <h1 id="form_header">User form</h1>
+                <div class="field">
+                    <label for="fname">First name:</label>
+                    <input type="text" id="fname" name="fname" placeholder="Enter your first name" />
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <label for="lname">Last name:</label>
+                    <input type="text" id="lname" name="lname" placeholder="Enter your last name" />
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <label for="bdate">Date of birth:</label>
+                    <input type="date" id="bdate" name="bdate" placeholder="YYYY-MM-DD" />
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <label for="email">email:</label>
+                    <input type="text" id="email" name="email" placeholder="email@email.com" />
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <p class="radio-header">Select your gender:</p>
+                    <input type="radio" id="male" name="gender" value="male" />
+                    <label for="gender">male</label>
+                    <input type="radio" id="female" name="gender" value="female" />
+                    <label for="gender">female</label>
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <label for="university">Your university:</label>
+                    <input type="text" id="university" name="university" placeholder="univeristy" />
+                    <div class="alert"></div>
+                </div>
+                <div class="field">
+                    <label for="city">Your city:</label>
+                    <input type="text" id="city" name="city" placeholder="city" />
+                    <div class="alert"></div>
+                </div>
+                <input id="form_submit" type="submit" value="create" />
+            </form>
+            <!-- END User creation form -->
+
+        </div>
+
+        <!-- END User list on start -->
+        <button id="create_user">add user</button>
+
+        <script src="main.js"></script>
+</body>
+
+</html>
