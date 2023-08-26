@@ -41,6 +41,33 @@ const list = document.getElementById("user_list");
 const form = document.getElementById("form");
 let storedUserList = [];
 let tempUser = [];
+let userId = {};
+let userIDtoEdit;
+let idGen = 5;
+
+const myform = document.getElementById('form');
+const fnameElement = myform.elements["fname"];
+const lnameElement = myform.elements['lname'];
+const bdateElement = myform.elements['bdate'];
+const emailElement = myform.elements['email'];
+const genderElement = myform.elements['gender'];
+const universityElement = myform.elements['university'];
+const cityElement = myform.elements['city'];
+const radioError = document.querySelector('.radio-header');
+const addUser = document.getElementById('add_user');
+res = []
+
+const FNAME_ERROR = 'Please input first name';
+const LNAME_ERROR = 'Please input last name';
+const BDATE_ERROR = 'Please enter your date of birth';
+const EMAIL_ERROR = 'Please enter your email';
+const GENDER_ERROR = 'Please indicate your gender';
+const UNIVERSITY_ERROR = 'Please enter your university';
+const CITY_ERROR = 'Please check your city of living';
+
+const lnameRegEx = /^[A-Z][a-z]{2,15}$/;
+const bdateRegEx = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-(19|20)\d\d$/;
+const emailRegEx = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 const closeButton = document.querySelector('[data-close-modal]');
 const modal = document.querySelector('[data-modal]');
@@ -49,12 +76,14 @@ closeButton.addEventListener('click', () => {
     modal.close()
 })
 
+document.getElementById("data_modal").addEventListener('click', (e) => {
+    if (e.target.textContent = "YES") {
+        deleteUser(userId);
+    }
+})
 
 // Function to show user list build from API response.
-
-
 // + 1.1.If list is not in localStorage get list from API.
-
 // Async func to receive users list from API dummyJson
 async function getUsers() {
     const response = await fetch('https://dummyjson.com/users?limit=5');
@@ -64,8 +93,20 @@ async function getUsers() {
 
 async function listBuild() {
     let users = await getUsers();
+    storedUserList = [];
     for (i of users.users) {
-        storedUserList.push([['id', i.id], ['email', i.email], ['firstName', i.firstName], ['lastName', i.lastName], ['birthDate', i.birthDate],
+        let date = new Date(i.birthDate);
+        let day = date.getDate();
+        if (day < 10) {
+            day = '0' + date.getDate();
+        }
+        let month = date.getMonth() + 1;
+        if (month < 10) {
+            month = '0' + month;
+        }
+        let year = date.getFullYear();
+        date = `${day}-${month}-${year}`;
+        storedUserList.push([['id', i.id], ['email', i.email], ['firstName', i.firstName], ['lastName', i.lastName], ['birthDate', date],
         ['gender', i.gender], ['university', i.university], ['city', i.address.city]]);
         const li = document.createElement('li');
         li.setAttribute('id', 'user' + i.id);
@@ -73,7 +114,7 @@ async function listBuild() {
         li.innerHTML = `
     <div><img src="${i.image}" alt="user avatar"></div>
             <div>
-                <p id="email">${i.email}</p>
+                <p id="table_email">${i.email}</p>
             </div>
             <div>
                 <p>${i.firstName}</p>
@@ -87,24 +128,14 @@ async function listBuild() {
             `;
         user_list.appendChild(li);
     }
-    // console.log(storedUserList);
     for (i of storedUserList) {
         tempUser.push(Object.fromEntries(i));
     }
     storedUserList = tempUser;
-    // console.log(storedUserList)
-
+    tempUser = [];
     // + 1.3. Save user list to localStorage.
     localStorage.setItem('users', JSON.stringify(storedUserList));
     return storedUserList;
-}
-
-
-// + 1.2.If list in localStorage get it from there.
-if (!localStorage.getItem('users')) {
-    listBuild()
-} else {
-    listBuildFromLocalStorage()
 }
 
 function listBuildFromLocalStorage() {
@@ -116,7 +147,7 @@ function listBuildFromLocalStorage() {
         li.innerHTML = `
     <div><img src="https://static.vecteezy.com/system/resources/previews/000/439/863/original/vector-users-icon.jpg" alt="user avatar"></div>
             <div>
-                <p id="email">${i.email}</p>
+                <p id="table_email">${i.email}</p>
             </div>
             <div>
                 <p>${i.firstName}</p>
@@ -154,7 +185,6 @@ list.addEventListener('click', (e) => {
     }
     if (e.target.innerHTML == 'Delete') {
         modal.showModal()
-        deleteUser(userId);
     }
 })
 
@@ -200,110 +230,162 @@ function viewUser(userId) {
 // EDIT User function
 // 3. Edit user data:
 function editUser(userId) {
+    FormClear();
     if (document.getElementById("data_form")) {
         const dataForm = document.getElementById("data_form");
         dataForm.remove();
     }
-    // console.log(userId);
     form.setAttribute('style', 'display: flex')
     document.getElementById("form_header").textContent = 'user data update';
-    document.getElementById("fname").setAttribute("value", userId.firstName);
-    document.getElementById("lname").setAttribute("value", userId.lastName);
-    document.getElementById("bdate").setAttribute("value", userId.birthDate);
-    document.getElementById("email").setAttribute("value", "test");
+    document.getElementById("fname").value = userId.firstName;
+    document.getElementById("lname").value = userId.lastName;
+    document.getElementById("bdate").value = userId.birthDate;
+    document.getElementById("email").value = userId.email;
     document.getElementById(userId.gender).checked = true;
-    document.getElementById("university").setAttribute("value", userId.university);
-    document.getElementById("city").setAttribute("value", userId.city);
+    document.getElementById("university").value = userId.university;
+    document.getElementById("city").value = userId.city;
     document.getElementById("form_submit").setAttribute('value', 'update');
+    userIDtoEdit = userId.id
 }
+
 
 // DELETE user
 function deleteUser(userId) {
-    document.getElementById("data_modal").addEventListener('click', (e) => {
-        // console.log(userId);
-        if (e.target.textContent = "YES") {
-            for (let i = 0; i < storedUserList.length; i++) {
-                if (storedUserList[i].id == userId.id) {
-                    console.log("Match: ");
-                    console.log('User ID in list', storedUserList[i].id,);
-                    console.log('User to delete', userId);
-                    storedUserList.splice(i, 1);
-                    console.log('storedUserList is:', storedUserList);
-                    break
-                }
-            }
-            list.innerHTML = "";
-            if (storedUserList.length < 1) {
-                localStorage.clear();
-                console.log('We are building a new list, cause:', storedUserList.length);
-                listBuild()
-            } else {
-                localStorage.clear();
-                console.log('We are getting list from storage, cause:', storedUserList.length);
-                localStorage.setItem('users', JSON.stringify(storedUserList))
-                listBuildFromLocalStorage()
-            }
+    for (let i = 0; i < storedUserList.length; i++) {
+        if (storedUserList[i].id == userId.id) {
+            storedUserList.splice(i, 1);
+            break
         }
-    })
+    }
+    list.innerHTML = "";
+    localStorage.clear();
+    if (storedUserList.length < 1) {
+        listBuild()
+    } else {
+        localStorage.setItem('users', JSON.stringify(storedUserList))
+        listBuildFromLocalStorage()
+    }
+}
 
+//Add user
+addUser.addEventListener('click', (e) => {
+    e.preventDefault();
+    FormClear();
+    myform.setAttribute('style', 'display: flex');
+    document.getElementById("form_header").textContent = 'Add user';
+    document.getElementById("form_submit").setAttribute('value', 'add user');
+})
+
+// + 1.2.If list in localStorage get it from there.
+if (!localStorage.getItem('users')) {
+    listBuild()
+} else {
+    listBuildFromLocalStorage()
+}
+
+
+// Clear form
+function FormClear() {
+    document.getElementById("fname").value = "";
+    document.getElementById("lname").value = "";
+    document.getElementById("bdate").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("male").checked = false;
+    document.getElementById("female").checked = false;
+    document.getElementById("university").value = "";
+    document.getElementById("city").value = "";
 }
 
 
 // FORM VALIDATION
-
-
 function ShowError(elem, msg) {
-    console.log(elem);
     const errorAlert = elem.parentNode.querySelector('.alert');
-    console.log(errorAlert);
     errorAlert.textContent = msg;
     elem.classList.add('.active');
 }
 
+
 function ShowSuccess(elem, msg) {
-    console.log('true');
     const errorAlert = elem.parentNode.querySelector('.alert');
     errorAlert.textContent = '';
     elem.classList.remove('.active');
 }
+
+
 ///Validate NAME ///
 function validateFname(el, message) {
-    // console.log(el)
-    if (el.value !== "") {
-        res.push(['Your name:', el.value]);
+    if (lnameRegEx.test(el.value)) {
+        res.push(['firstName', el.value]);
         ShowSuccess(el, message);
         return true;
     } else {
-        // console.log(el, FNAME_ERROR);
         ShowError(el, message);
         return false;
     }
 }
+
 
 ///Validate LASTNAME ///
 function validateLname(el, message) {
-    // console.log(el)
-    if (el.value !== "") {
-        res.push(['Your surname', el.value]);
+    if (lnameRegEx.test(el.value)) {
+        res.push(['lastName', el.value]);
         ShowSuccess(el, message);
         return true;
     } else {
-        // console.log(el, FNAME_ERROR);
         ShowError(el, message);
         return false;
     }
 }
 
-///Validate PAYMENT ///
-function validatepayment(el, message) {
-    let selectedpayment;
+
+///Validate Date of birth ///
+function validateBDate(el, message) {
+    let date = new Date(el.value);
+    let day = date.getDate();
+    if (day < 10) {
+        day = '0' + date.getDate();
+    }
+    let month = date.getMonth() + 1;
+    if (month < 10) {
+        month = '0' + month;
+    }
+    let year = date.getFullYear();
+    date = `${day}-${month}-${year}`;
+
+    if (bdateRegEx.test(date)) {
+        res.push(['birthDate', date]);
+        ShowSuccess(el, message);
+        return true;
+    } else {
+        ShowError(el, message);
+        return false;
+    }
+}
+
+
+///Validate EMAIL ///
+function validateEmail(el, message) {
+    if (emailRegEx.test(el.value)) {
+        res.push(['email', el.value]);
+        ShowSuccess(el, message);
+        return true;
+    } else {
+        ShowError(el, message);
+        return false;
+    }
+}
+
+
+///Validate GENDER///
+function validateGender(el, message) {
+    let selectedgender;
     for (const radio of el) {
         if (radio.checked) {
-            selectedpayment = radio.value;
+            selectedgender = radio.value;
         }
     }
-    if (selectedpayment) {
-        res.push(['Way of payment:', selectedpayment]);
+    if (selectedgender) {
+        res.push(['gender', selectedgender]);
         ShowSuccess(radioError, message);
         return true;
     }
@@ -312,59 +394,31 @@ function validatepayment(el, message) {
 }
 
 
-///Validate QUANTITY ///
-function validatequantity(el, message) {
-    console.log()
-    let qty = el.valueAsNumber;
-    if (qty > 0) {
-        res.push(['Ordered quantity:', qty]);
-        ShowSuccess(radioError, message);
+///Validate University ///
+function validateUniversity(el, message) {
+    if (el.value !== "") {
+        res.push(['university', el.value]);
+        ShowSuccess(el, message);
         return true;
+    } else {
+        ShowError(el, message);
+        return false;
     }
-    ShowError(radioError, message);
-    return false;
 }
-
 
 
 ///Validate CITY ///
 function validateCity(el, message) {
-    if (el.selectedIndex != 0) {
-        res.push(['City of delivery:', el.value]);
-        ShowSuccess(el, message);
-        return true;
-    }
-    ShowError(el, message);
-    return false;
-}
-
-///Validate NOVA POSHTA ///
-function validateAddress(el, message) {
-    // console.log(el)
     if (el.value !== "") {
-        res.push(['Nova poshta brunch:', el.value]);
+        res.push(['city', el.value]);
         ShowSuccess(el, message);
         return true;
     } else {
-        // console.log(el, FNAME_ERROR);
         ShowError(el, message);
         return false;
     }
 }
 
-///Validate COMMENTS///
-function validateComments(el, message) {
-    // console.log(el)
-    if (el.value !== "") {
-        res.push(['Comments:', el.value]);
-        ShowSuccess(el, message);
-        return true;
-    } else {
-        // console.log(el, FNAME_ERROR);
-        ShowError(el, message);
-        return false;
-    }
-}
 
 function datatable() {
     document.getElementById('form').setAttribute('style', 'display: none');
@@ -386,31 +440,45 @@ function datatable() {
         row.appendChild(cellTwo);
         table.appendChild(row);
     }
-
-
-    console.log(res);
-
 }
+
+
 //////// EventListener for the form.////////
 
-// myform.addEventListener('submit', (event) => {
-//     event.preventDefault();
-//     // console.log(fnameElement, 'inside listener')
-//     res = []
-//     const isFnameValid = validateFname(fnameElement, FNAME_ERROR);
-//     const isLnameValid = validateLname(lnameElement, LNAME_ERROR);
-//     const ispaymentValid = validatepayment(paymentElement, payment_ERROR);
-//     const isquantityValid = validatequantity(quantityElement, quantity_ERROR);
-//     const isCityValid = validateCity(cityElement, CITY_ERROR);
-//     const isAddressValid = validateAddress(addressElement, ADDRESS_ERROR);
-//     const isCommentsValid = validateComments(commentsElement, COMMENTS_ERROR);
+myform.addEventListener('submit', (event) => {
+    event.preventDefault();
+    res = []
+    const isFnameValid = validateFname(fnameElement, FNAME_ERROR);
+    const isLnameValid = validateLname(lnameElement, LNAME_ERROR);
+    const isBdateValid = validateBDate(bdateElement, BDATE_ERROR);
+    const isEmailValid = validateEmail(emailElement, EMAIL_ERROR);
+    const isGenderValid = validateGender(genderElement, GENDER_ERROR);
+    const isUniversityValid = validateUniversity(universityElement, UNIVERSITY_ERROR);
+    const isCityValid = validateCity(cityElement, CITY_ERROR);
 
-//     if (isFnameValid && isLnameValid && ispaymentValid && isquantityValid && isCityValid && isAddressValid && isCommentsValid) {
-//         res.push(["Product: ", currentProd[0].product]);
-//         console.log('Submit');
-//         datatable();
-//     }
-// })
+    if (isFnameValid && isLnameValid && isGenderValid && isBdateValid && isEmailValid && isUniversityValid && isCityValid) {
+        if (!userIDtoEdit) {
+            idGen += 1;
+            res.push(['id', idGen]);
+            storedUserList.push(Object.fromEntries(res));
+        } else {
+            userIDtoEdit = null;
+            for (let i = 0; i < storedUserList.length; i++) {
+                if (storedUserList[i].id == userId.id) {
+                    res.push(['id', userId.id]);
+                    storedUserList[i] = Object.fromEntries(res);
+                    break
+                }
+            }
+        }
+        localStorage.clear();
+        localStorage.setItem('users', JSON.stringify(storedUserList));
+        list.innerHTML = "";
+        FormClear();
+        myform.setAttribute('style', 'display: none');
+        listBuildFromLocalStorage()
+    }
+})
 
 
 

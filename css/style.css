@@ -47,3 +47,11 @@ img {
   display: none;
   flex-direction: column;
 }
+
+.alert {
+  color: red;
+}
+
+button {
+  text-transform: capitalize;
+}
